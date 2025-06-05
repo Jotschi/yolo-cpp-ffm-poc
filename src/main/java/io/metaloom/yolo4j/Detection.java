@@ -1,4 +1,4 @@
-package io.metaloom.jyolib;
+package io.metaloom.yolo4j;
 
 public record Detection(BoundingBox box, float conf, int classId) {
 

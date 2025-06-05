@@ -1,4 +1,4 @@
-package io.metaloom.jyolib.example;
+package io.metaloom.yolo4j.example;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -7,15 +7,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import io.metaloom.jyolib.BoundingBox;
-import io.metaloom.jyolib.Detection;
-import io.metaloom.jyolib.YoloLib;
 import io.metaloom.video4j.Video4j;
 import io.metaloom.video4j.VideoFile;
 import io.metaloom.video4j.VideoFrame;
 import io.metaloom.video4j.opencv.CVUtils;
 import io.metaloom.video4j.utils.ImageUtils;
 import io.metaloom.video4j.utils.SimpleImageViewer;
+import io.metaloom.yolo4j.BoundingBox;
+import io.metaloom.yolo4j.Detection;
+import io.metaloom.yolo4j.YoloLib;
 
 public class UsageExampleTest {
 

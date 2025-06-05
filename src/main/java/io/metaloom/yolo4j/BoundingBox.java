@@ -1,4 +1,4 @@
-package io.metaloom.jyolib;
+package io.metaloom.yolo4j;
 
 public class BoundingBox {
 

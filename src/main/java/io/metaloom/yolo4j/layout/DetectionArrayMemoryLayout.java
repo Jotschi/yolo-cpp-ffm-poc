@@ -1,4 +1,4 @@
-package io.metaloom.jyolib.layout;
+package io.metaloom.yolo4j.layout;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 

@@ -8,9 +8,6 @@
 #include <string>
 #include <memory>
 
-// const std::string labelsPath = "YOLOs-CPP/models/coco.names";
-// const std::string modelPath = "YOLOs-CPP/models/yolo8n.onnx"; // YOLOv12
-
 static std::unique_ptr<YOLO12Detector> globalDetector;
 
 static bool initialized = false;

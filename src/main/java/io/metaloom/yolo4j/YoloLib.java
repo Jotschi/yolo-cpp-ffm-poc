@@ -1,4 +1,4 @@
-package io.metaloom.jyolib;
+package io.metaloom.yolo4j;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -29,10 +29,10 @@ import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.metaloom.jyolib.layout.DetectionArrayMemoryLayout;
-import io.metaloom.jyolib.layout.DetectionMemoryLayout;
 import io.metaloom.video4j.impl.MatProvider;
 import io.metaloom.video4j.opencv.CVUtils;
+import io.metaloom.yolo4j.layout.DetectionArrayMemoryLayout;
+import io.metaloom.yolo4j.layout.DetectionMemoryLayout;
 
 public class YoloLib {
 

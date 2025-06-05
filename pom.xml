@@ -2,8 +2,8 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>io.metaloom.jyolib</groupId>
-    <artifactId>jyolib</artifactId>
+    <groupId>io.metaloom.yolo4j</groupId>
+    <artifactId>yolo4j</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <parent>
@@ -16,9 +16,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <name>jYoLib</name>
-    <url>https://github.com/metaloom/jyolib</url>
-    <description>A java library for native YOLO object detection</description>
+    <name>yolo4j</name>
+    <url>https://github.com/metaloom/yolo4j</url>
+    <description>A Java library for native YOLO object detection</description>
     <inceptionYear>2025</inceptionYear>
 
     <developers>

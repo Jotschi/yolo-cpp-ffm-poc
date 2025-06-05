@@ -1,7 +1,6 @@
-# jYoLib
+# YOLO4j
 
-
-This jYoLib is a library which enables native access to YOLO object detection in Java.
+This library enables native access to YOLO object detection in Java.
 
 Under the hood this library uses the Foreign Function and Memory API to hook into a custom library which uses YOLOs-CPP to run inference on OpenCV Mats which can be provided by Video4j.
 
@@ -15,21 +14,21 @@ Currently only AMD64 Linux is supported. Support for other platforms is not plan
 
 ```xml
 <dependency>
-  <groupId>io.metaloom.jyolib</groupId>
-  <artifactId>jyolib</artifactId>
+  <groupId>io.metaloom.yolo4j</groupId>
+  <artifactId>yolo4j</artifactId>
   <version>${project.version}</version>
 </dependency>
 ```
 
 Image Example
 ```java
-%{snippet|id=image-usage.example|file=src/test/java/io/metaloom/jyolib/example/UsageExampleTest.java}
+%{snippet|id=image-usage.example|file=src/test/java/io/metaloom/yolo4j/example/UsageExampleTest.java}
 ```
 
 
 Video Example
 ```java
-%{snippet|id=video-usage.example|file=src/test/java/io/metaloom/jyolib/example/UsageExampleTest.java}
+%{snippet|id=video-usage.example|file=src/test/java/io/metaloom/yolo4j/example/UsageExampleTest.java}
 ```
 
 
