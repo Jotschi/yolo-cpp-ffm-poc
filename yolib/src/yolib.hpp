@@ -1,13 +1,29 @@
-#ifndef YOLO12_HPP
-#define YOLO12_HPP
+#ifndef YOLOLIB_HPP
+#define YOLOLIB_HPP
 
 #include <vector>
 #include <opencv2/highgui/highgui.hpp>
 
-typedef struct {
-    Detection* data;  // pointer to dynamically allocated Detection array
-    int count;          // number of Detections
+typedef struct
+{
+    int x;
+    int y;
+    int width;
+    int height;
+} BoundingBox;
+
+typedef struct
+{
+    BoundingBox box;
+    float conf;
+    int classId;
+} Detection;
+
+typedef struct
+{
+    Detection *data;
+    int count;
 } DetectionArray;
 
 
-#endif // YOLO12_HPP
+#endif // YOLOLIB_HPP

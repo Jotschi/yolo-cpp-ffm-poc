@@ -1,14 +1,15 @@
 #include <string>
-#include "det/YOLO12.hpp"
+#include "yolos/yolos.hpp"
 #include "yolib.hpp"
 #include <string.h>
+#include <chrono>
 
 // For Test code
 #include <iostream>
 #include <string>
 #include <memory>
 
-static std::unique_ptr<YOLO12Detector> globalDetector;
+static std::unique_ptr<yolos::det::YOLODetector> globalDetector;
 
 static bool initialized = false;
 
@@ -24,7 +25,7 @@ extern "C" void initialize(const char *labelsPath, const char *modelPath, bool u
     {
         printf("Initializing YoloLib using model %s - labels %s - Using GPU: %s\n", modelPath, labelsPath, useGPU ? "true" : "false");
         fflush(stdout);
-        globalDetector = std::make_unique<YOLO12Detector>(modelPath, labelsPath, useGPU);
+        globalDetector = std::make_unique<yolos::det::YOLODetector>(modelPath, labelsPath, useGPU);
         initialized = true;
     }
 }
@@ -63,12 +64,12 @@ extern "C" DetectionArray *detect_test()
 extern "C" DetectionArray *detect(cv::Mat *imagePtr, bool drawBoundingBox)
 {
 
-    YOLO12Detector *detector = globalDetector.get();
+    yolos::det::YOLODetector *detector = globalDetector.get();
     cv::Mat image = *imagePtr;
 
     // Detect objects in the image and measure execution time
     auto start = std::chrono::high_resolution_clock::now();
-    std::vector<Detection> results = detector->detect(image);
+    std::vector<yolos::det::Detection> results = detector->detect(image);
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::high_resolution_clock::now() - start);
     printf("Detection of %i completed in: %i ms\n", results.size(), duration.count());
@@ -84,12 +85,21 @@ extern "C" DetectionArray *detect(cv::Mat *imagePtr, bool drawBoundingBox)
     {
         if (drawBoundingBox)
         {
-            detector->drawBoundingBox(image, results);
+            detector->drawDetections(image, results);
         }
 
         result->count = static_cast<int>(results.size());
         result->data = new Detection[result->count];
-        std::copy(results.begin(), results.end(), result->data);
+        for (int i = 0; i < result->count; i++)
+        {
+            const auto &src = results[i];
+            result->data[i].box.x = src.box.x;
+            result->data[i].box.y = src.box.y;
+            result->data[i].box.width = src.box.width;
+            result->data[i].box.height = src.box.height;
+            result->data[i].conf = src.conf;
+            result->data[i].classId = src.classId;
+        }
         return result;
     }
 }

@@ -16,7 +16,7 @@ Currently only AMD64 Linux is supported. Support for other platforms is not plan
 <dependency>
   <groupId>io.metaloom.yolo4j</groupId>
   <artifactId>yolo4j</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -27,7 +27,7 @@ boolean useGPU = true;
 
 // Initialize video4j and YoloLib (Video4j is used to handle OpenCV Mat)
 Video4j.init();
-YoloLib.init("YOLOs-CPP/models/yolo8n.onnx", "YOLOs-CPP/models/coco.names", useGPU);
+YoloLib.init("YOLOs-CPP-1.0.0/models/YOLOv11n_voc.onnx", "YOLOs-CPP-1.0.0/models/voc.names", useGPU);
 
 // Load the image and invoke the detection
 BufferedImage img = ImageUtils.load(new File(imagePath));
@@ -46,7 +46,7 @@ boolean useGPU = false;
 
 // Initialize video4j and YoloLib (Video4j is used to handle OpenCV Mat)
 Video4j.init();
-YoloLib.init("YOLOs-CPP/models/yolo8n.onnx", "YOLOs-CPP/models/coco.names", useGPU);
+YoloLib.init("YOLOs-CPP-1.0.0/models/YOLOv11n_voc.onnx", "YOLOs-CPP-1.0.0/models/voc.names", useGPU);
 SimpleImageViewer viewer = new SimpleImageViewer();
 
 // Open the video using Video4j
@@ -78,11 +78,42 @@ try (VideoFile video = VideoFile.open("src/test/resources/3769953-hd_1920_1080_2
 
 ### Requirements:
 
-- YOLO-CPP [Using YOLO-CPP from C++](https://github.com/Geekgineer/YOLOs-CPP)
+- YOLOs-CPP v1.0.0 [Release](https://github.com/Geekgineer/YOLOs-CPP/releases/tag/v1.0.0)
 - ONNX Runtime shared library (required by `libyolib`)
+- OpenCV development package with CMake config (`OpenCVConfig.cmake`)
 - JDK 23 or newer
 - Maven
 - GCC 13
+
+### YOLOs-CPP Source And Models
+
+YOLOs-CPP v1.0.0 no longer ships models in the repository. Download source and models separately from GitHub Releases.
+
+1. Download YOLOs-CPP source release:
+
+```bash
+curl -L https://github.com/Geekgineer/YOLOs-CPP/archive/refs/tags/v1.0.0.tar.gz -o yolo-cpp-v1.0.0.tar.gz
+tar -xzf yolo-cpp-v1.0.0.tar.gz
+```
+
+2. Download detection ONNX models from the tuned model release tag (`v1.0.0-onnx-tuned-models`):
+
+```bash
+curl -L https://github.com/Geekgineer/YOLOs-CPP/releases/download/v1.0.0-onnx-tuned-models/yolo-detection-models-tuned.zip -o yolo-detection-models-tuned.zip
+unzip -o yolo-detection-models-tuned.zip -d YOLOs-CPP-1.0.0/models
+```
+
+The tuned model release also provides additional ONNX assets:
+
+- `yolo-segmentation-models-tuned.zip`
+- `yolo-pose-models-tuned.zip`
+- `yolo-obb-models-tuned.zip`
+- `yolo-classification-models-tuned.zip`
+
+Reference:
+
+- Source release: https://github.com/Geekgineer/YOLOs-CPP/releases/tag/v1.0.0
+- ONNX tuned model assets: https://github.com/Geekgineer/YOLOs-CPP/releases/tag/v1.0.0-onnx-tuned-models
 
 ### ONNX Runtime
 
@@ -104,9 +135,16 @@ java -Dyolo4j.onnxruntime.lib=/absolute/path/to/onnxruntime/lib ...
 ### Building native code
 
 ```bash
-git clone git@github.com:Geekgineer/YOLOs-CPP.git (Head Rev: 363930885855b0441ba672d5ead7c6363cc34edb)
 cd yolib
-./build.sh 1.20.1 1
+./build.sh 1.20.1 1 1.0.0
+```
+
+### Running Tests
+
+Tests use YOLOs-CPP v1.0.0 paths and will try to download the detection model asset automatically if it is missing.
+
+```bash
+mvn test
 ```
 
 ## Releasing

@@ -3,6 +3,8 @@
 set -euo pipefail
 
 CURRENT_DIR=$(cd "$(dirname "$0")" && pwd)
+YOLOS_CPP_VERSION="${3:-1.0.0}"
+YOLOS_CPP_DIR="${CURRENT_DIR}/../YOLOs-CPP-${YOLOS_CPP_VERSION}"
 
 # Default values
 ONNXRUNTIME_VERSION="${1:-1.20.1}"
@@ -10,17 +12,18 @@ ONNXRUNTIME_GPU="${2:-0}"
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [ONNXRUNTIME_VERSION] [ONNXRUNTIME_GPU]"
+    echo "Usage: $0 [ONNXRUNTIME_VERSION] [ONNXRUNTIME_GPU] [YOLOS_CPP_VERSION]"
     echo
     echo "This script downloads ONNX Runtime for the current platform and architecture and builds YOLOs-CPP."
     echo
     echo "Arguments:"
     echo "  ONNXRUNTIME_VERSION   Version of ONNX Runtime to download (default: 1.20.1)."
     echo "  ONNXRUNTIME_GPU       Whether to use GPU support (0 for CPU, 1 for GPU, default: 0)."
+    echo "  YOLOS_CPP_VERSION     YOLOs-CPP release version to use (default: 1.0.0)."
     echo
     echo "Examples:"
     echo "  $0 1.20.1 0          # Downloads ONNX Runtime v1.20.1 for CPU."
-    echo "  $0 1.16.3 1          # Downloads ONNX Runtime v1.16.3 for GPU."
+    echo "  $0 1.16.3 1 1.0.0    # Downloads ONNX Runtime v1.16.3 for GPU with YOLOs-CPP v1.0.0."
     echo
     exit 1
 }
@@ -81,7 +84,11 @@ fi
 
 ONNXRUNTIME_FILE="${ONNXRUNTIME_FILE}-${ONNXRUNTIME_VERSION}.tgz"
 ONNXRUNTIME_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/${ONNXRUNTIME_FILE}"
-ONNXRUNTIME_DIR="${CURRENT_DIR}/onnxruntime-${ONNXRUNTIME_PLATFORM}-${ONNXRUNTIME_ARCH}-gpu-${ONNXRUNTIME_VERSION}"
+ONNXRUNTIME_DIR_BASE="onnxruntime-${ONNXRUNTIME_PLATFORM}-${ONNXRUNTIME_ARCH}"
+if [[ "$ONNXRUNTIME_GPU" -eq 1 ]]; then
+    ONNXRUNTIME_DIR_BASE="${ONNXRUNTIME_DIR_BASE}-gpu"
+fi
+ONNXRUNTIME_DIR="${CURRENT_DIR}/${ONNXRUNTIME_DIR_BASE}-${ONNXRUNTIME_VERSION}"
 
 # Function to download and extract ONNX Runtime
 download_onnxruntime() {
@@ -108,13 +115,46 @@ build_project() {
 
     # Ensure the build directory exists
     mkdir -p "$build_dir"
+
+    # Avoid source-dir mismatch issues from copied build caches.
+    rm -f "$build_dir/CMakeCache.txt"
+    rm -rf "$build_dir/CMakeFiles"
+
     cd "$build_dir"
 
     echo "Configuring CMake with build type: $build_type ..."
-    cmake .. -D ONNXRUNTIME_DIR="${ONNXRUNTIME_DIR}" -DCMAKE_BUILD_TYPE="$build_type" -DCMAKE_CXX_FLAGS_RELEASE="-O3 -march=native"
+    cmake .. \
+        -D ONNXRUNTIME_DIR="${ONNXRUNTIME_DIR}" \
+        -D YOLOS_CPP_DIR="${YOLOS_CPP_DIR}" \
+        -DCMAKE_BUILD_TYPE="$build_type" \
+        -DCMAKE_CXX_FLAGS_RELEASE="-O3 -march=native"
 
     echo "Building project incrementally ..."
     cmake --build . -- -j$(nproc)  # Parallel build using available CPU cores
+}
+
+download_yolos_cpp() {
+    local archive="v${YOLOS_CPP_VERSION}.tar.gz"
+    local url="https://github.com/Geekgineer/YOLOs-CPP/archive/refs/tags/${archive}"
+    local extracted_dir="${CURRENT_DIR}/../YOLOs-CPP-${YOLOS_CPP_VERSION}"
+
+    echo "Downloading YOLOs-CPP source ${YOLOS_CPP_VERSION} from $url ..."
+    if ! curl -L --fail "$url" -o "$archive"; then
+        echo "Error: Failed to download YOLOs-CPP source archive."
+        exit 1
+    fi
+
+    echo "Extracting YOLOs-CPP source ..."
+    if ! tar -xzf "$archive" -C "${CURRENT_DIR}/.."; then
+        echo "Error: Failed to extract YOLOs-CPP source archive."
+        exit 1
+    fi
+    rm -f "$archive"
+
+    if [ ! -d "$extracted_dir" ]; then
+        echo "Error: Extracted YOLOs-CPP directory not found: $extracted_dir"
+        exit 1
+    fi
 }
 
 
@@ -124,6 +164,12 @@ if [ ! -d "$ONNXRUNTIME_DIR" ]; then
     download_onnxruntime
 else
     echo "ONNX Runtime already exists. Skipping download."
+fi
+
+if [ ! -f "${YOLOS_CPP_DIR}/include/yolos/yolos.hpp" ]; then
+    download_yolos_cpp
+else
+    echo "YOLOs-CPP source already exists. Skipping download."
 fi
 
 build_project "Release"

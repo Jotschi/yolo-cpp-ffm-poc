@@ -192,11 +192,21 @@ public class YoloLib {
 			}
 			if (Files.isDirectory(current)) {
 				try (Stream<Path> children = Files.list(current)) {
-					children
-						.filter(Files::isDirectory)
-						.filter(path -> path.getFileName() != null && path.getFileName().toString().startsWith("onnxruntime-"))
-						.map(path -> path.resolve("lib"))
-						.forEach(paths::add);
+					children.filter(Files::isDirectory).forEach(path -> {
+						if (path.getFileName() != null && path.getFileName().toString().startsWith("onnxruntime-")) {
+							paths.add(path.resolve("lib"));
+							return;
+						}
+						try (Stream<Path> nested = Files.list(path)) {
+							nested
+								.filter(Files::isDirectory)
+								.filter(candidate -> candidate.getFileName() != null && candidate.getFileName().toString().startsWith("onnxruntime-"))
+								.map(candidate -> candidate.resolve("lib"))
+								.forEach(paths::add);
+						} catch (IOException e) {
+							logger.debug("Skipping nested ONNX runtime scan for {}", path, e);
+						}
+					});
 				} catch (IOException e) {
 					logger.debug("Skipping ONNX runtime scan for {}", current, e);
 				}

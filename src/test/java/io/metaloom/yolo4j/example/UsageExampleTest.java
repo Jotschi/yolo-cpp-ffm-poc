@@ -6,6 +6,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -19,37 +20,37 @@ import io.metaloom.video4j.utils.ImageUtils;
 import io.metaloom.video4j.utils.SimpleImageViewer;
 import io.metaloom.yolo4j.BoundingBox;
 import io.metaloom.yolo4j.Detection;
+import io.metaloom.yolo4j.TestAssets;
 import io.metaloom.yolo4j.YoloLib;
 
 public class UsageExampleTest {
 
-	private static final String MODEL_PATH = "YOLOs-CPP/models/yolo8n.onnx";
-	private static final String LABELS_PATH = "YOLOs-CPP/models/coco.names";
-	private static boolean ready = false;
+	private static Path modelPath;
+	private static Path labelsPath;
+	private static Path imagePath = TestAssets.imagePath();
 
 	@BeforeAll
 	public static void setup() {
 		Video4j.init();
 		try {
-			YoloLib.init(MODEL_PATH, LABELS_PATH, false);
-			ready = true;
+			modelPath = TestAssets.ensureDetectionModel();
+			labelsPath = TestAssets.labelsPath(modelPath);
+			YoloLib.init(modelPath.toString(), labelsPath.toString(), false);
 		} catch (RuntimeException e) {
 			if (e.getMessage() != null && e.getMessage().contains("already initialized")) {
-				ready = true;
+				return;
 			}
+			throw e;
 		} catch (Throwable t) {
-			ready = false;
+			throw new RuntimeException("Failed to initialize YoloLib test assets", t);
 		}
-		assumeTrue(ready, "Skipping native YoloLib tests because YOLO runtime setup is not available.");
 	}
 
 	@Test
 	public void testImageUsageExample() throws IOException {
 		// SNIPPET START image-usage.example
-		String imagePath = "YOLOs-CPP/data/kitchen.jpg";
-
 		// Load the image and invoke the detection
-		BufferedImage img = ImageUtils.load(new File(imagePath));
+		BufferedImage img = ImageUtils.load(new File(imagePath.toString()));
 		List<Detection> detections = YoloLib.detect(img, false);
 
 		// Print the detections

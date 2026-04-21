@@ -8,3 +8,4 @@ yolib/build
 yolib/onnxruntime*
 hs_err*
 /src/main/resources/native/linux/libyolib*
+/YOLOs-CPP-*
