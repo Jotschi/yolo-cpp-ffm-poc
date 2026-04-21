@@ -79,9 +79,27 @@ try (VideoFile video = VideoFile.open("src/test/resources/3769953-hd_1920_1080_2
 ### Requirements:
 
 - YOLO-CPP [Using YOLO-CPP from C++](https://github.com/Geekgineer/YOLOs-CPP)
+- ONNX Runtime shared library (required by `libyolib`)
 - JDK 23 or newer
 - Maven
 - GCC 13
+
+### ONNX Runtime
+
+`libyolib` links against ONNX Runtime at runtime. On Linux, `libonnxruntime.so.1` must be available.
+
+Yolo4j tries to load ONNX Runtime automatically during `YoloLib.init(...)` using this order:
+
+1. System property `yolo4j.onnxruntime.lib` (directory containing `libonnxruntime.so.1`)
+2. Dynamic discovery relative to the provided model path (`onnxruntime-*/lib` folders in parent directories)
+
+If ONNX Runtime cannot be resolved, initialization fails with an `UnsatisfiedLinkError`.
+
+Example override:
+
+```bash
+java -Dyolo4j.onnxruntime.lib=/absolute/path/to/onnxruntime/lib ...
+```
 
 ### Building native code
 

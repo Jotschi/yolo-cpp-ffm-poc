@@ -21,14 +21,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Stream;
 
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.metaloom.opencv.core.Mat;
+import io.metaloom.opencv.imgproc.Imgproc;
 import io.metaloom.video4j.impl.MatProvider;
 import io.metaloom.video4j.opencv.CVUtils;
 import io.metaloom.yolo4j.layout.DetectionArrayMemoryLayout;
@@ -105,10 +108,11 @@ public class YoloLib {
 
 	}
 
-	private static SymbolLookup loadLib() {
+	private static SymbolLookup loadLib(Path modelPath) {
 		String os = System.getProperty("os.name", "generic")
 			.toLowerCase(Locale.ENGLISH);
 		String name = System.mapLibraryName("yolib");
+		loadOnnxRuntime(os, modelPath);
 
 		String libpath = "";
 		if (os.contains("linux")) {
@@ -120,7 +124,11 @@ public class YoloLib {
 		}
 
 		try (InputStream inputStream = YoloLib.class.getResourceAsStream(libpath)) {
+			if (inputStream == null) {
+				throw new RuntimeException("Could not find native resource " + libpath);
+			}
 			File fileOut = File.createTempFile(name, "");
+			fileOut.deleteOnExit();
 			try (OutputStream outputStream = new FileOutputStream(fileOut)) {
 				byte[] buffer = new byte[1024];
 				int read = -1;
@@ -136,12 +144,73 @@ public class YoloLib {
 		}
 	}
 
+	private static void loadOnnxRuntime(String os, Path modelPath) {
+		String runtimeLibName = runtimeLibName(os);
+		if (runtimeLibName == null) {
+			return;
+		}
+
+		List<Path> attempted = new ArrayList<>();
+		for (Path libDir : onnxRuntimeSearchPaths(modelPath)) {
+			Path runtime = libDir.resolve(runtimeLibName);
+			attempted.add(runtime.toAbsolutePath());
+			if (!Files.exists(runtime)) {
+				continue;
+			}
+			try {
+				System.load(runtime.toAbsolutePath().toString());
+				logger.debug("Loaded ONNX Runtime from {}", runtime.toAbsolutePath());
+				return;
+			} catch (UnsatisfiedLinkError e) {
+				logger.warn("Failed to load ONNX Runtime from {}", runtime.toAbsolutePath(), e);
+			}
+		}
+		logger.debug("Could not preload ONNX runtime. Checked: {}", attempted);
+	}
+
+	private static String runtimeLibName(String os) {
+		if (os.contains("linux")) {
+			return "libonnxruntime.so.1";
+		}
+		if (os.contains("mac")) {
+			return "libonnxruntime.dylib";
+		}
+		return null;
+	}
+
+	private static List<Path> onnxRuntimeSearchPaths(Path modelPath) {
+		String configuredPath = System.getProperty("yolo4j.onnxruntime.lib");
+		Set<Path> paths = new LinkedHashSet<>();
+		if (configuredPath != null && !configuredPath.isBlank()) {
+			paths.add(Paths.get(configuredPath));
+		}
+
+		Path current = modelPath.toAbsolutePath().normalize();
+		while (current != null) {
+			if (current.getFileName() != null && current.getFileName().toString().startsWith("onnxruntime-")) {
+				paths.add(current.resolve("lib"));
+			}
+			if (Files.isDirectory(current)) {
+				try (Stream<Path> children = Files.list(current)) {
+					children
+						.filter(Files::isDirectory)
+						.filter(path -> path.getFileName() != null && path.getFileName().toString().startsWith("onnxruntime-"))
+						.map(path -> path.resolve("lib"))
+						.forEach(paths::add);
+				} catch (IOException e) {
+					logger.debug("Skipping ONNX runtime scan for {}", current, e);
+				}
+			}
+			current = current.getParent();
+		}
+
+		return new ArrayList<>(paths);
+	}
+
 	public static void init(String modelPath, String labelsPath, boolean useGPU) {
 		if (initialized) {
 			throw new RuntimeException("YoloLib already initialized");
 		}
-		yoloLibrary = loadLib();
-
 		Path mPath = Paths.get(modelPath);
 		if (!Files.exists(mPath)) {
 			throw new RuntimeException("Unable to locate model with path " + mPath);
@@ -151,6 +220,8 @@ public class YoloLib {
 		if (!Files.exists(lPath)) {
 			throw new RuntimeException("Unable to locate labels file with path " + lPath);
 		}
+
+		yoloLibrary = loadLib(mPath);
 
 		try {
 			labels = loadLabels(lPath);
@@ -186,7 +257,7 @@ public class YoloLib {
 				FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_BOOLEAN));
 
 		try {
-			MemorySegment imageSeg = MemorySegment.ofAddress(imageMat.getNativeObjAddr());
+			MemorySegment imageSeg = imageMat.nativePtr();
 			MemorySegment detectionArrayStruct = (MemorySegment) detectHandler.invoke(imageSeg, drawBoundingBoxes);
 			List<Detection> results = mapDetectionsArray(detectionArrayStruct);
 			return results;

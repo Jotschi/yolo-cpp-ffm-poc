@@ -4,16 +4,17 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.metaloom.yolo4j</groupId>
     <artifactId>yolo4j</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
 
     <parent>
         <groupId>io.metaloom</groupId>
         <artifactId>maven-parent</artifactId>
-        <version>2.0.3-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <video4j.version>2.0.0-SNAPSHOT</video4j.version>
     </properties>
 
     <name>yolo4j</name>
@@ -51,7 +52,7 @@
         <dependency>
             <groupId>io.metaloom.video</groupId>
             <artifactId>video4j</artifactId>
-            <version>1.4.0-SNAPSHOT</version>
+            <version>${video4j.version}</version>
         </dependency>
 
         <!--Test-->
@@ -68,7 +69,7 @@
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -88,7 +89,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <release>23</release>
+                    <release>25</release>
                 </configuration>
             </plugin>
 
@@ -128,6 +129,14 @@
                         <version>0.1.1</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--enable-native-access=ALL-UNNAMED</argLine>
+                </configuration>
             </plugin>
 
         </plugins>
